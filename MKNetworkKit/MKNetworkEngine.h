@@ -293,7 +293,7 @@
  *	Cancels all operations in the shared queue that matches a given string. This string could be your host name or a path
  *
  */
-+(void) cancelOperationsContainingURLString:(NSString*) string;
+-(void) cancelOperationsContainingURLString:(NSString*) string;
 
 /*!
  *  @abstract Cancels operations matching the given block.
@@ -302,7 +302,7 @@
  *	Cancels all operations in the shared queue for which the given block returns YES.
  *
  */
-+(void) cancelOperationsMatchingBlock:(BOOL (^)(MKNetworkOperation*))block;
+-(void) cancelOperationsMatchingBlock:(BOOL (^)(MKNetworkOperation*))block;
 
 /*!
  *  @abstract Cancels all operations created by this engine

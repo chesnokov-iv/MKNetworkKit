@@ -40,7 +40,9 @@
 #error MKNetworkKit is ARC only. Either turn on ARC for the project or use -fobjc-arc flag
 #endif
 
-@interface MKNetworkEngine (/*Private Methods*/)
+@interface MKNetworkEngine (/*Private Methods*/) {
+    NSOperationQueue *_sharedNetworkQueue;
+}
 
 @property (copy, nonatomic) NSString *hostName;
 @property (strong, nonatomic) Reachability11 *reachability;
@@ -61,7 +63,7 @@
 
 @end
 
-static NSOperationQueue *_sharedNetworkQueue;
+
 
 @implementation MKNetworkEngine
 
@@ -73,16 +75,7 @@ static NSOperationQueue *_sharedNetworkQueue;
 #pragma mark Initialization
 
 +(void) initialize {
-  
-  if(!_sharedNetworkQueue) {
-    static dispatch_once_t oncePredicate;
-    dispatch_once(&oncePredicate, ^{
-      _sharedNetworkQueue = [[NSOperationQueue alloc] init];
-      [_sharedNetworkQueue addObserver:[self self] forKeyPath:@"operationCount" options:0 context:NULL];
-      [_sharedNetworkQueue setMaxConcurrentOperationCount:6];
-      
-    });
-  }
+ 
 }
 
 - (id) init {
@@ -101,45 +94,49 @@ static NSOperationQueue *_sharedNetworkQueue;
 }
 
 - (id) initWithHostName:(NSString*) hostName portNumber:(int)portNumber apiPath:(NSString*) apiPath customHeaderFields:(NSDictionary*) headers {
-  if((self = [super init])) {
-    
-    self.portNumber = portNumber;
-    self.apiPath = apiPath;
-    self.backgroundCacheQueue = dispatch_queue_create("com.mknetworkkit.cachequeue", DISPATCH_QUEUE_SERIAL);
-    self.operationQueue = dispatch_queue_create("com.mknetworkkit.operationqueue", DISPATCH_QUEUE_SERIAL);
-    
-    if(hostName) {
-      [[NSNotificationCenter defaultCenter] addObserver:self
-                                               selector:@selector(reachabilityChanged:)
-                                                   name:kReachabilityChangedNotification
-                                                 object:nil];
-      
-      self.hostName = hostName;
-      self.reachability = [Reachability11 reachabilityWithHostname:self.hostName];
-      
-      dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    if((self = [super init])) {
         
-        [self.reachability startNotifier];
-      });
+        _sharedNetworkQueue = [[NSOperationQueue alloc] init];
+        [_sharedNetworkQueue addObserver:self forKeyPath:@"operationCount" options:0 context:NULL];
+        [_sharedNetworkQueue setMaxConcurrentOperationCount:6];
+        
+        self.portNumber = portNumber;
+        self.apiPath = apiPath;
+        self.backgroundCacheQueue = dispatch_queue_create("com.mknetworkkit.cachequeue", DISPATCH_QUEUE_SERIAL);
+        self.operationQueue = dispatch_queue_create("com.mknetworkkit.operationqueue", DISPATCH_QUEUE_SERIAL);
+        
+        if(hostName) {
+            [[NSNotificationCenter defaultCenter] addObserver:self
+                                                     selector:@selector(reachabilityChanged:)
+                                                         name:kReachabilityChangedNotification
+                                                       object:nil];
+            
+            self.hostName = hostName;
+            self.reachability = [Reachability11 reachabilityWithHostname:self.hostName];
+            
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                
+                [self.reachability startNotifier];
+            });
+        }
+        
+        if(headers[@"User-Agent"] == nil) {
+            
+            NSMutableDictionary *newHeadersDict = [headers mutableCopy];
+            NSString *userAgentString = [NSString stringWithFormat:@"%@/%@",
+                                         [[NSBundle mainBundle] infoDictionary][(NSString *)kCFBundleNameKey],
+                                         [[NSBundle mainBundle] infoDictionary][(NSString *)kCFBundleVersionKey]];
+            newHeadersDict[@"User-Agent"] = userAgentString;
+            self.customHeaders = newHeadersDict;
+        } else {
+            self.customHeaders = [headers mutableCopy];
+        }
+        
+        self.customOperationSubclass = [MKNetworkOperation class];
+        self.shouldSendAcceptLanguageHeader = YES;
     }
     
-    if(headers[@"User-Agent"] == nil) {
-      
-      NSMutableDictionary *newHeadersDict = [headers mutableCopy];
-      NSString *userAgentString = [NSString stringWithFormat:@"%@/%@",
-                                   [[NSBundle mainBundle] infoDictionary][(NSString *)kCFBundleNameKey],
-                                   [[NSBundle mainBundle] infoDictionary][(NSString *)kCFBundleVersionKey]];
-      newHeadersDict[@"User-Agent"] = userAgentString;
-      self.customHeaders = newHeadersDict;
-    } else {
-      self.customHeaders = [headers mutableCopy];
-    }
-    
-    self.customOperationSubclass = [MKNetworkOperation class];
-    self.shouldSendAcceptLanguageHeader = YES;
-  }
-  
-  return self;
+    return self;
 }
 
 - (id) initWithHostName:(NSString*) hostName customHeaderFields:(NSDictionary*) headers {
@@ -182,7 +179,7 @@ static NSOperationQueue *_sharedNetworkQueue;
 #pragma mark -
 #pragma mark KVO for network Queue
 
-+ (void) observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object
+- (void) observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object
                          change:(NSDictionary *)change context:(void *)context
 {
   if (object == _sharedNetworkQueue && [keyPath isEqualToString:@"operationCount"]) {
@@ -257,14 +254,14 @@ static NSOperationQueue *_sharedNetworkQueue;
   }
 }
 
-+(void) cancelOperationsContainingURLString:(NSString*) string {
+-(void) cancelOperationsContainingURLString:(NSString*) string {
   
   [self cancelOperationsMatchingBlock:^BOOL (MKNetworkOperation* op) {
     return [[op.readonlyRequest.URL absoluteString] rangeOfString:string].location != NSNotFound;
   }];
 }
 
-+(void) cancelOperationsMatchingBlock:(BOOL (^)(MKNetworkOperation* op))block {
+-(void) cancelOperationsMatchingBlock:(BOOL (^)(MKNetworkOperation* op))block {
     
     NSArray *runningOperations = _sharedNetworkQueue.operations;
     [runningOperations enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
@@ -278,7 +275,7 @@ static NSOperationQueue *_sharedNetworkQueue;
 -(void) cancelAllOperations {
 
   if(self.hostName) {
-    [MKNetworkEngine cancelOperationsContainingURLString:self.hostName];
+    [self cancelOperationsContainingURLString:self.hostName];
   } else {
     DLog(@"Host name is not set. Cannot cancel operations.");
   }
