@@ -43,7 +43,7 @@
 @interface MKNetworkEngine (/*Private Methods*/)
 
 @property (copy, nonatomic) NSString *hostName;
-@property (strong, nonatomic) Reachability *reachability;
+@property (strong, nonatomic) Reachability11 *reachability;
 @property (copy, nonatomic) NSDictionary *customHeaders;
 @property (assign, nonatomic) Class customOperationSubclass;
 
@@ -115,7 +115,7 @@ static NSOperationQueue *_sharedNetworkQueue;
                                                  object:nil];
       
       self.hostName = hostName;
-      self.reachability = [Reachability reachabilityWithHostname:self.hostName];
+      self.reachability = [Reachability11 reachabilityWithHostname:self.hostName];
       
       dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         
@@ -430,11 +430,26 @@ static NSOperationQueue *_sharedNetworkQueue;
   [self enqueueOperation:operation forceReload:NO];
 }
 
+-(void) enqueueOperation:(MKNetworkOperation*) operation forceCache:(BOOL) forceCache {
+	[self enqueueOperation:operation forceReload:NO forceCache:forceCache];
+}
+
 -(void) enqueueOperation:(MKNetworkOperation*) operation forceReload:(BOOL) forceReload {
-  
-  NSParameterAssert(operation != nil);
-  if(operation == nil) return;
-  
+	[self enqueueOperation:operation forceReload:forceReload forceCache:NO];
+}
+
+-(void) enqueueOperation:(MKNetworkOperation*) operation forceReload:(BOOL) forceReload forceCache:(BOOL) forceCache {
+	
+	NSParameterAssert(operation != nil);
+	if(operation == nil) return;
+	
+	if (forceCache) {
+		NSData *cachedData = [self cachedDataForOperation:operation];
+		if(cachedData) {
+			[operation setCachedData:cachedData];
+			return;
+		}
+	}
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     
     
@@ -461,6 +476,7 @@ static NSOperationQueue *_sharedNetworkQueue;
         dispatch_async(dispatch_get_main_queue(), ^{
           // Jump back to the original thread here since setCachedData updates the main thread
           [operation setCachedData:cachedData];
+          return;
         });
         
         if(!forceReload) {
@@ -543,7 +559,7 @@ static NSOperationQueue *_sharedNetworkQueue;
           errorBlock(completedOperation, error);
   }];
   
-  [self enqueueOperation:op];
+  [self enqueueOperation:op forceCache:YES];
   
   return op;
 }
@@ -579,7 +595,7 @@ static NSOperationQueue *_sharedNetworkQueue;
       DLog(@"%@", error);
   }];
   
-  [self enqueueOperation:op];
+  [self enqueueOperation:op forceCache:YES];
   
   return op;
 }

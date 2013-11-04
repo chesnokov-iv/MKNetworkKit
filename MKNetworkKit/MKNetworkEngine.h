@@ -275,6 +275,18 @@
 -(void) enqueueOperation:(MKNetworkOperation*) operation forceReload:(BOOL) forceReload;
 
 /*!
+ *  @abstract Enqueues your operation into the shared queue.
+ *
+ *  @discussion
+ *	The operation you created is enqueued to the shared queue.
+ *  When forceCache is NO, this method behaves like enqueueOperation:
+ *  When forceCache is YES, only cached data will be returned if cached data is available.
+ *  @seealso
+ *  enqueueOperation:
+ */
+-(void) enqueueOperation:(MKNetworkOperation*) operation forceCache:(BOOL) forceCache;
+
+/*!
  *  @abstract Cancels operations matching a given string
  *
  *  @discussion

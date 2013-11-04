@@ -520,7 +520,6 @@ OSStatus extractIdentityAndTrust(CFDataRef inPKCS12Data,
 }
 
 -(void) dealloc {
-  
   [_connection cancel];
   _connection = nil;
 }
@@ -1363,10 +1362,15 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite {
     }
     
   } else if (self.response.statusCode >= 400 && self.response.statusCode < 600 && ![self isCancelled]) {
-    
-    [self operationFailedWithError:[NSError errorWithDomain:NSURLErrorDomain
+      NSMutableDictionary *fullUserInfo = [NSMutableDictionary dictionaryWithDictionary:self.response.allHeaderFields];
+	  id jsonResponse = [self responseJSON];
+	  if (jsonResponse) {
+		  [fullUserInfo setObject:jsonResponse forKey:@"responseJSON"];
+	  }
+      
+      [self operationFailedWithError:[NSError errorWithDomain:NSURLErrorDomain
                                                        code:self.response.statusCode
-                                                   userInfo:self.response.allHeaderFields]];
+                                                   userInfo:fullUserInfo]];
   }
   [self endBackgroundTask];
   
@@ -1397,8 +1401,8 @@ totalBytesExpectedToWrite:(NSInteger)totalBytesExpectedToWrite {
 
 #if TARGET_OS_IPHONE
 -(UIImage*) responseImage {
-  
-  return [UIImage imageWithData:[self responseData]];
+
+    return [[UIImage alloc] initWithData:[self responseData]];
 }
 
 -(void) decompressedResponseImageOfSize:(CGSize) size completionHandler:(void (^)(UIImage *decompressedImage)) imageDecompressionHandler {
