@@ -19,6 +19,7 @@
 		50A5FF05166918F200BB4A2F /* MKNetworkEngineSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 50A5FF04166918F200BB4A2F /* MKNetworkEngineSpec.m */; };
 		50A5FF0616691B1D00BB4A2F /* libKiwi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 50A5FEFC1669181400BB4A2F /* libKiwi.a */; };
 		50F32A791678EC8F001D6DFE /* libOHHTTPStubs.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 50F32A781678EC6D001D6DFE /* libOHHTTPStubs.a */; };
+		F8161072182A66500076432B /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F8161071182A66500076432B /* ImageIO.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +84,7 @@
 		50A5FEF01669181400BB4A2F /* Kiwi.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kiwi.xcodeproj; path = Kiwi/Kiwi.xcodeproj; sourceTree = "<group>"; };
 		50A5FF04166918F200BB4A2F /* MKNetworkEngineSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MKNetworkEngineSpec.m; sourceTree = "<group>"; };
 		50F32A701678EC6D001D6DFE /* OHHTTPStubs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = OHHTTPStubs.xcodeproj; path = OHHTTPStubs/OHHTTPStubs/OHHTTPStubs.xcodeproj; sourceTree = "<group>"; };
+		F8161071182A66500076432B /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS7.0.sdk/System/Library/Frameworks/ImageIO.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F8161072182A66500076432B /* ImageIO.framework in Frameworks */,
 				50F32A791678EC8F001D6DFE /* libOHHTTPStubs.a in Frameworks */,
 				50A5FF0616691B1D00BB4A2F /* libKiwi.a in Frameworks */,
 				50A5FD1916690EB600BB4A2F /* Security.framework in Frameworks */,
@@ -127,6 +130,7 @@
 		50A5FCF616690C2500BB4A2F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F8161071182A66500076432B /* ImageIO.framework */,
 				50A5FD1416690E0500BB4A2F /* CFNetwork.framework */,
 				50A5FD0C16690D7B00BB4A2F /* CoreGraphics.framework */,
 				50A5FD1216690DAF00BB4A2F /* Foundation.framework */,
