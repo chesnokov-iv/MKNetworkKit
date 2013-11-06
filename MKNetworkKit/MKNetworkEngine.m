@@ -45,7 +45,7 @@
 }
 
 @property (copy, nonatomic) NSString *hostName;
-@property (strong, nonatomic) Reachability11 *reachability;
+@property (strong, nonatomic) MKReachability *reachability;
 @property (copy, nonatomic) NSDictionary *customHeaders;
 @property (assign, nonatomic) Class customOperationSubclass;
 
@@ -112,7 +112,7 @@
                                                        object:nil];
             
             self.hostName = hostName;
-            self.reachability = [Reachability11 reachabilityWithHostname:self.hostName];
+            self.reachability = [MKReachability reachabilityWithHostname:self.hostName];
             
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                 
