@@ -40,6 +40,8 @@
 #error MKNetworkKit is ARC only. Either turn on ARC for the project or use -fobjc-arc flag
 #endif
 
+NSString* const kOperationCountPath = @"operationCount";
+
 @interface MKNetworkEngine (/*Private Methods*/) {
     NSOperationQueue *_sharedNetworkQueue;
 }
@@ -97,7 +99,7 @@
     if((self = [super init])) {
         
         _sharedNetworkQueue = [[NSOperationQueue alloc] init];
-        [_sharedNetworkQueue addObserver:self forKeyPath:@"operationCount" options:0 context:NULL];
+        [_sharedNetworkQueue addObserver:self forKeyPath:kOperationCountPath options:0 context:NULL];
         [_sharedNetworkQueue setMaxConcurrentOperationCount:6];
         
         self.portNumber = portNumber;
@@ -148,32 +150,33 @@
 #pragma mark Memory Mangement
 
 -(void) dealloc {
-  
+	
 #if TARGET_OS_IPHONE
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
-  dispatch_release(_backgroundCacheQueue);
-  dispatch_release(_operationQueue);
+	dispatch_release(_backgroundCacheQueue);
+	dispatch_release(_operationQueue);
 #endif
-  
+	
 #else
-  
+	
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1080
-  dispatch_release(_backgroundCacheQueue);
-  dispatch_release(_operationQueue);
+	dispatch_release(_backgroundCacheQueue);
+	dispatch_release(_operationQueue);
 #endif
 #endif
-  
-  [[NSNotificationCenter defaultCenter] removeObserver:self name:kReachabilityChangedNotification object:nil];
+	[_sharedNetworkQueue removeObserver:self forKeyPath:kOperationCountPath context:NULL];
+	
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:kReachabilityChangedNotification object:nil];
 #if TARGET_OS_IPHONE
-  [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
-  [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
-  [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillTerminateNotification object:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationWillTerminateNotification object:nil];
 #elif TARGET_OS_MAC
-  [[NSNotificationCenter defaultCenter] removeObserver:self name:NSApplicationWillHideNotification object:nil];
-  [[NSNotificationCenter defaultCenter] removeObserver:self name:NSApplicationWillResignActiveNotification object:nil];
-  [[NSNotificationCenter defaultCenter] removeObserver:self name:NSApplicationWillTerminateNotification object:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:NSApplicationWillHideNotification object:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:NSApplicationWillResignActiveNotification object:nil];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:NSApplicationWillTerminateNotification object:nil];
 #endif
-
+	
 }
 
 #pragma mark -
@@ -182,7 +185,7 @@
 - (void) observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object
                          change:(NSDictionary *)change context:(void *)context
 {
-  if (object == _sharedNetworkQueue && [keyPath isEqualToString:@"operationCount"]) {
+  if (object == _sharedNetworkQueue && [keyPath isEqualToString:kOperationCountPath]) {
     
     [[NSNotificationCenter defaultCenter] postNotificationName:kMKNetworkEngineOperationCountChanged
                                                         object:[NSNumber numberWithInteger:(NSInteger)[_sharedNetworkQueue operationCount]]];
