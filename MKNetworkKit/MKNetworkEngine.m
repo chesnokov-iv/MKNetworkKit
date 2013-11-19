@@ -203,36 +203,34 @@ NSString* const kOperationCountPath = @"operationCount";
 #pragma mark -
 #pragma mark Reachability related
 
--(void) reachabilityChanged:(NSNotification*) notification
-{
-  if([self.reachability currentReachabilityStatus] == ReachableViaWiFi)
-  {
-    DLog(@"Server [%@] is reachable via Wifi", self.hostName);
-    [_sharedNetworkQueue setMaxConcurrentOperationCount:6];
-    
-    [self checkAndRestoreFrozenOperations];
-  }
-  else if([self.reachability currentReachabilityStatus] == ReachableViaWWAN)
-  {
-    if(self.wifiOnlyMode) {
-      
-      DLog(@" Disabling engine as server [%@] is reachable only via cellular data.", self.hostName);
-      [_sharedNetworkQueue setMaxConcurrentOperationCount:0];
-    } else {
-      DLog(@"Server [%@] is reachable only via cellular data", self.hostName);
-      [_sharedNetworkQueue setMaxConcurrentOperationCount:2];
-      [self checkAndRestoreFrozenOperations];
-    }
-  }
-  else if([self.reachability currentReachabilityStatus] == NotReachable)
-  {
-    DLog(@"Server [%@] is not reachable", self.hostName);
-    [self freezeOperations];
-  }
-  
-  if(self.reachabilityChangedHandler) {
-    self.reachabilityChangedHandler([self.reachability currentReachabilityStatus]);
-  }
+-(void) reachabilityChanged:(NSNotification*) notification {
+	if([self.reachability currentReachabilityStatus] == ReachableViaWiFi) {
+#ifdef LOG_REACHABILITY
+		DLog(@"Server [%@] is reachable via Wifi", self.hostName);
+#endif
+		[_sharedNetworkQueue setMaxConcurrentOperationCount:6];
+		[self checkAndRestoreFrozenOperations];
+	}
+	else if([self.reachability currentReachabilityStatus] == ReachableViaWWAN) {
+		if(self.wifiOnlyMode) {
+			DLog(@" Disabling engine as server [%@] is reachable only via cellular data.", self.hostName);
+			[_sharedNetworkQueue setMaxConcurrentOperationCount:0];
+		} else {
+			DLog(@"Server [%@] is reachable only via cellular data", self.hostName);
+			[_sharedNetworkQueue setMaxConcurrentOperationCount:2];
+			[self checkAndRestoreFrozenOperations];
+		}
+	}
+	else if([self.reachability currentReachabilityStatus] == NotReachable) {
+#ifdef LOG_REACHABILITY
+		DLog(@"Server [%@] is not reachable", self.hostName);
+#endif
+		[self freezeOperations];
+	}
+	
+	if(self.reachabilityChangedHandler) {
+		self.reachabilityChangedHandler([self.reachability currentReachabilityStatus]);
+	}
 }
 
 #pragma mark Freezing operations (Called when network connectivity fails)

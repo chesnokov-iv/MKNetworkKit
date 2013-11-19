@@ -92,6 +92,10 @@
 // on iOS (or any mobile device), 30 seconds is already considered high.
 
 #define kMKNetworkKitRequestTimeOutInSeconds 30
+
+// Uncomment to report reachability
+//#define LOG_REACHABILITY 1
+
 #endif
 
 
